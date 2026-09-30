@@ -22,6 +22,7 @@ import {
 	noteAssistantActivity,
 	persist,
 	restoreFrom,
+	syncStatus,
 } from "./lib/session.ts";
 import { registerTools } from "./lib/tools.ts";
 
@@ -50,6 +51,7 @@ export default function projectsExtension(pi: ExtensionAPI): void {
 
 	pi.on("session_start", async (_event, ctx) => {
 		restoreFrom(ctx);
+		syncStatus(ctx);
 	});
 
 	pi.on("turn_start", async (event) => {

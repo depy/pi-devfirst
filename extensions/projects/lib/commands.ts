@@ -18,6 +18,7 @@ import {
 	pause,
 	persist,
 	requireActiveProject,
+	syncStatus,
 } from "./session.ts";
 
 const SUBCOMMANDS = [
@@ -100,6 +101,7 @@ async function handleNew(rest: string[], ctx: ExtensionCommandContext, pi: Exten
 	const project = await createProject(slug, title);
 	activate(project.project, project.phase);
 	persist(pi);
+	syncStatus(ctx);
 	ctx.ui.notify(`Project "${project.project}" created. Phase: ${project.phase}.`, "info");
 }
 
@@ -122,6 +124,7 @@ async function handlePhase(
 	await setProjectPhase(slug, name);
 	activate(slug, name);
 	persist(pi);
+	syncStatus(ctx);
 	ctx.ui.notify(`Active phase is now "${name}".`, "info");
 	if (name === "tickets-planning") {
 		sendToAgent(pi, ctx, ticketsPlanningProposal(slug));
@@ -143,6 +146,7 @@ async function handleOff(ctx: ExtensionCommandContext, pi: ExtensionAPI): Promis
 	}
 	pause();
 	persist(pi);
+	syncStatus(ctx);
 	ctx.ui.notify(`Project mode off. Project "${slug}" stays saved.`, "info");
 }
 
@@ -156,6 +160,7 @@ async function handleResume(rest: string[], ctx: ExtensionCommandContext, pi: Ex
 	const project = await reopenProject(slug);
 	activate(project.project, project.phase);
 	persist(pi);
+	syncStatus(ctx);
 	ctx.ui.notify(`Resumed project "${project.project}" at phase "${project.phase}".`, "info");
 }
 
@@ -169,6 +174,7 @@ async function handleFinish(ctx: ExtensionCommandContext, pi: ExtensionAPI): Pro
 	await finishProject(slug);
 	pause();
 	persist(pi);
+	syncStatus(ctx);
 	ctx.ui.notify(`Project "${slug}" is finished. Project mode is off.`, "info");
 }
 
@@ -223,6 +229,7 @@ async function handleDelete(rest: string[], ctx: ExtensionCommandContext, pi: Ex
 	if (isActive) {
 		clearActive();
 		persist(pi);
+		syncStatus(ctx);
 	}
 
 	const ticketNote = removedTickets.length > 0 ? ` and ${removedTickets.length} ticket(s)` : "";

@@ -12,6 +12,7 @@ import {
 	persist,
 	requireActiveProject,
 	activate,
+	syncStatus,
 } from "./session.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
@@ -86,7 +87,7 @@ export function registerTools(pi: ExtensionAPI): void {
 		promptSnippet: "Switch the active project phase",
 		executionMode: "sequential",
 		parameters: SetPhaseParams,
-		async execute(_id, params) {
+		async execute(_id, params, _signal, _onUpdate, ctx) {
 			if (isDirty()) {
 				throw new Error(
 					"The current phase has unsaved work. Call project_save_phase with the synthesized body, then retry project_set_phase.",
@@ -97,6 +98,7 @@ export function registerTools(pi: ExtensionAPI): void {
 			await setProjectPhase(slug, phase.name);
 			activate(slug, phase.name);
 			persist(pi);
+			syncStatus(ctx);
 			if (phase.name === "tickets-planning") {
 				pi.sendUserMessage(ticketsPlanningProposal(slug), { deliverAs: "followUp" });
 			}
@@ -115,7 +117,7 @@ export function registerTools(pi: ExtensionAPI): void {
 		promptSnippet: "Finish the active project",
 		executionMode: "sequential",
 		parameters: EmptyParams,
-		async execute() {
+		async execute(_id, _params, _signal, _onUpdate, ctx) {
 			if (isDirty()) {
 				throw new Error(
 					"The current phase has unsaved work. Call project_save_phase with the synthesized body, then retry project_finish.",
@@ -125,6 +127,7 @@ export function registerTools(pi: ExtensionAPI): void {
 			await finishProject(slug);
 			pause();
 			persist(pi);
+			syncStatus(ctx);
 			return {
 				content: [{ type: "text" as const, text: `Project "${slug}" is finished. Project mode is off.` }],
 				details: undefined,
@@ -140,7 +143,7 @@ export function registerTools(pi: ExtensionAPI): void {
 		promptSnippet: "Pause project mode",
 		executionMode: "sequential",
 		parameters: EmptyParams,
-		async execute() {
+		async execute(_id, _params, _signal, _onUpdate, ctx) {
 			if (isDirty()) {
 				throw new Error(
 					"The current phase has unsaved work. Call project_save_phase with the synthesized body, then retry project_pause.",
@@ -149,6 +152,7 @@ export function registerTools(pi: ExtensionAPI): void {
 			const { slug } = requireActiveProject();
 			pause();
 			persist(pi);
+			syncStatus(ctx);
 			return {
 				content: [{ type: "text" as const, text: `Project mode off. Project "${slug}" stays saved.` }],
 				details: undefined,

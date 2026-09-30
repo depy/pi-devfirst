@@ -14,6 +14,9 @@ export interface ProjectModeState {
 
 export const PROJECT_MODE_ENTRY = "project-mode";
 
+/** Stable footer status key. The footer sorts keys, so this entry stays first. */
+export const STATUS_KEY = "project";
+
 let state: ProjectModeState = { activeSlug: null, activePhase: null, mode: "off", dirty: false };
 let currentTurnIndex = -1;
 let lastSavedTurn = -1;
@@ -46,6 +49,18 @@ export function requireActiveProject(): { slug: string; phase: string } {
 export function activate(slug: string, phase: string): void {
 	state = { activeSlug: slug, activePhase: phase, mode: "on", dirty: false };
 	lastSavedTurn = currentTurnIndex;
+}
+
+/** Footer label for the active project: "<slug> (<phase>)". Undefined when off. */
+export function formatStatusLabel(): string | undefined {
+	if (!isOn()) return undefined;
+	if (!state.activeSlug || !state.activePhase) return undefined;
+	return `${state.activeSlug} (${state.activePhase})`;
+}
+
+/** Update the pi footer status line to match the current project state. */
+export function syncStatus(ctx: ExtensionContext): void {
+	ctx.ui.setStatus(STATUS_KEY, formatStatusLabel());
 }
 
 export function clearActive(): void {
