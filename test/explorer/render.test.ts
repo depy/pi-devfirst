@@ -12,6 +12,12 @@ test("renders headings, lists, tables, and code", () => {
 	assert.match(html, /<code>/);
 });
 
+test("headings get stable slug ids for anchors", () => {
+	const html = renderMarkdown("# Architecture Planning\n\n## Success Criteria\n\n### Decision 1: Device-tree node layout\n");
+	assert.match(html, /<h2 id="success-criteria">/);
+	assert.match(html, /<h3 id="decision-1-device-tree-node-layout">/);
+});
+
 test("escapes a raw script tag so it cannot execute", () => {
 	const html = renderMarkdown('Before\n\n<script>alert("x")</script>\n\nAfter');
 	assert.doesNotMatch(html, /<script>/);

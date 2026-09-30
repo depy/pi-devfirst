@@ -92,11 +92,49 @@ test("ticketPage shows fields and the rendered body", () => {
 			links: ["https://example.com"],
 			body: "## Acceptance\n\n- [ ] done",
 		},
+		links: [{ text: "https://example.com", href: "https://example.com", children: [] }],
 	});
 	assert.match(html, /One/);
 	assert.match(html, /core/);
 	assert.match(html, /https:\/\/example\.com/);
 	assert.match(html, /Acceptance/);
+});
+
+test("ticketPage nests heading references under the document link", () => {
+	const html = ticketPage({
+		project,
+		ticket: {
+			filename: "alpha-core-links-todo-aaa.md",
+			number: 1,
+			title: "Links",
+			status: "todo",
+			epic: "core",
+			task: "do-thing",
+			project: "alpha",
+			created: project.updated,
+			updated: project.updated,
+			links: ["~/.projects/alpha/3-architecture-planning.md", "Decision 1 (direct layout)"],
+			body: "",
+		},
+		links: [
+			{
+				text: "Architecture Planning",
+				href: "/p/alpha/phase/architecture-planning",
+				children: [
+					{
+						text: "Decision 1 (direct layout)",
+						href: "/p/alpha/phase/architecture-planning#decision-1-device-tree-node-layout",
+						children: [],
+					},
+					{ text: "not a heading", href: null, children: [] },
+				],
+			},
+		],
+	});
+	assert.match(html, /href="\/p\/alpha\/phase\/architecture-planning"/);
+	assert.match(html, /link-children/);
+	assert.match(html, /#decision-1-device-tree-node-layout/);
+	assert.doesNotMatch(html, /<a[^>]*>not a heading<\/a>/);
 });
 
 test("ticketsPage links each ticket", () => {
@@ -135,6 +173,7 @@ test("ticket titles from files are escaped in the page", () => {
 			links: [],
 			body: "",
 		},
+		links: [],
 	});
 	assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
 });

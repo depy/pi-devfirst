@@ -82,3 +82,52 @@ test("ticket page enforces the project join", async () => {
 	const missing = await loadTicketPage("alpha", "does-not-exist.md");
 	assert.equal(missing, null);
 });
+
+test("ticket page resolves doc links and nests heading references", async () => {
+	await writePhase(
+		"alpha",
+		"architecture-planning",
+		3,
+		"# Architecture Planning\n\n## Decisions\n\n### Decision 1: Device-tree node layout\n\n### Decision 2: Parent color value\n",
+	);
+	await makeTicket({
+		filename: "alpha-core-links-todo-ccc.md",
+		project: "alpha",
+		title: "Links",
+		number: 2,
+		links: ["~/.projects/alpha/3-architecture-planning.md", "Decision 1 (direct layout)", "Decision 2"],
+	});
+
+	const view = await loadTicketPage("alpha", "alpha-core-links-todo-ccc.md");
+	assert.ok(view);
+	assert.equal(view.links.length, 1);
+	const group = view.links[0]!;
+	assert.equal(group.text, "Architecture Planning");
+	assert.equal(group.href, "/p/alpha/phase/architecture-planning");
+	assert.deepEqual(
+		group.children.map((child) => child.href),
+		[
+			"/p/alpha/phase/architecture-planning#decision-1-device-tree-node-layout",
+			"/p/alpha/phase/architecture-planning#decision-2-parent-color-value",
+		],
+	);
+});
+
+test("ticket link with a fragment uses the heading text", async () => {
+	await makeTicket({
+		filename: "alpha-core-frag-todo-ddd.md",
+		project: "alpha",
+		title: "Fragment",
+		number: 3,
+		links: ["~/.projects/alpha/3-architecture-planning.md#Decision 2", "not a heading"],
+	});
+
+	const view = await loadTicketPage("alpha", "alpha-core-frag-todo-ddd.md");
+	assert.ok(view);
+	assert.equal(view.links[0]!.text, "Decision 2");
+	assert.equal(view.links[0]!.href, "/p/alpha/phase/architecture-planning#decision-2-parent-color-value");
+	assert.deepEqual(
+		view.links[0]!.children.map((child) => child.href),
+		[null],
+	);
+});

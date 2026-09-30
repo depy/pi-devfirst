@@ -26,9 +26,55 @@ export function safeHref(href: string | null | undefined): string | null {
 	return trimmed;
 }
 
+/** GitHub-style slug for heading text. Empty text becomes "section". */
+export function slugify(text: string): string {
+	return text
+		.trim()
+		.toLowerCase()
+		.replace(/[`*_~]/g, "")
+		.replace(/[^\p{L}\p{N}\s-]/gu, "")
+		.replace(/\s+/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^-+|-+$/g, "");
+}
+
+interface HeadingRef {
+	id: string;
+	text: string;
+}
+
+/** Headings in document order, each with the id the heading renderer emits. */
+export function documentHeadings(body: string): HeadingRef[] {
+	const headings: HeadingRef[] = [];
+	const seen = new Map<string, number>();
+	for (const line of body.split("\n")) {
+		const match = line.match(/^#{1,6}\s+(.+?)\s*#*\s*$/);
+		if (!match) continue;
+		const text = match[1]!;
+		const base = slugify(text) || "section";
+		const count = seen.get(base) ?? 0;
+		seen.set(base, count + 1);
+		headings.push({ id: count === 0 ? base : `${base}-${count}`, text });
+	}
+	return headings;
+}
+
+const usedHeadingIds = new Map<string, number>();
+
+function uniqueHeadingId(text: string): string {
+	const base = slugify(text) || "section";
+	const count = usedHeadingIds.get(base) ?? 0;
+	usedHeadingIds.set(base, count + 1);
+	return count === 0 ? base : `${base}-${count}`;
+}
+
 const marked = new Marked({
 	gfm: true,
 	renderer: {
+		heading({ tokens, text, depth }: Tokens.Heading): string {
+			const id = escapeHtml(uniqueHeadingId(text));
+			return `<h${depth} id="${id}">${this.parser.parseInline(tokens)}</h${depth}>`;
+		},
 		html({ text }: Tokens.HTML | Tokens.Tag): string {
 			return escapeHtml(text);
 		},
@@ -59,5 +105,6 @@ const marked = new Marked({
 /** Convert a Markdown body to HTML. Empty input returns an empty string. */
 export function renderMarkdown(markdown: string): string {
 	if (!markdown || markdown.trim() === "") return "";
+	usedHeadingIds.clear();
 	return marked.parse(markdown) as string;
 }

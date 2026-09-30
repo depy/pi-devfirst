@@ -72,9 +72,17 @@ export interface PhasePageView {
 	versions: VersionRef[];
 }
 
+/** One entry in the ticket Links list. `href` null means plain text. */
+export interface LinkRef {
+	text: string;
+	href: string | null;
+	children: LinkRef[];
+}
+
 export interface TicketPageView {
 	project: ProjectSummary;
 	ticket: Ticket;
+	links: LinkRef[];
 }
 
 export type RouteName =

@@ -7,6 +7,7 @@
 
 import { renderMarkdown } from "./render.ts";
 import type {
+	LinkRef,
 	ProjectListView,
 	ProjectPageView,
 	PhasePageView,
@@ -187,6 +188,9 @@ nav li::before {
 }
 nav .current { font-weight: 700; }
 
+.links { list-style: none; margin: 0; padding-left: 0; }
+.link-children { margin: 2px 0 2px 1.4rem; }
+
 table { border-collapse: collapse; width: 100%; }
 th {
   padding: 8px 10px;
@@ -352,12 +356,20 @@ export function phasePage(view: PhasePageView): string {
 	return layout(body);
 }
 
+function renderLinkRef(link: LinkRef): string {
+	const label = escapeHtml(link.text);
+	const body = link.href ? `<a href="${escapeHtml(link.href)}">${label}</a>` : label;
+	if (link.children.length === 0) return body;
+	const children = link.children.map((child) => `<li>${renderLinkRef(child)}</li>`).join("");
+	return `${body}<ul class="link-children">${children}</ul>`;
+}
+
 export function ticketPage(view: TicketPageView): string {
 	const slug = escapeHtml(view.project.project);
 	const ticket = view.ticket;
 
-	const links = ticket.links.length
-		? `<ul>${ticket.links.map((link) => `<li><a href="${escapeHtml(link)}">${escapeHtml(link)}</a></li>`).join("")}</ul>`
+	const links = view.links.length
+		? `<ul class="links">${view.links.map((link) => `<li>${renderLinkRef(link)}</li>`).join("")}</ul>`
 		: `<span class="meta">none</span>`;
 
 	const body =
