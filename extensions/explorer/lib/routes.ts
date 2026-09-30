@@ -4,6 +4,7 @@
  * Read-only. The only side effect is registering an SSE client.
  */
 
+import { readFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadPhasePage, loadProjectList, loadProjectPage, loadTicketPage } from "./read-model.ts";
 import { matchRoute } from "./router.ts";
@@ -23,6 +24,15 @@ function sendHtml(res: ServerResponse, status: number, html: string): void {
 	res.end(html);
 }
 
+/** Vendored mermaid bundle. Read once, then served from memory. */
+let mermaidScript: string | null = null;
+function readMermaid(): string {
+	if (mermaidScript === null) {
+		mermaidScript = readFileSync(new URL("../assets/mermaid.min.js", import.meta.url), "utf8");
+	}
+	return mermaidScript;
+}
+
 export async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
 	try {
 		const match = matchRoute(req.method ?? "GET", req.url ?? "/");
@@ -36,6 +46,11 @@ export async function handleRequest(req: IncomingMessage, res: ServerResponse): 
 				if (match.file === "style.css") {
 					res.writeHead(200, { "Content-Type": "text/css; charset=utf-8" });
 					res.end(STYLE_CSS);
+					return;
+				}
+				if (match.file === "mermaid.min.js") {
+					res.writeHead(200, { "Content-Type": "application/javascript; charset=utf-8" });
+					res.end(readMermaid());
 					return;
 				}
 				sendHtml(res, 404, errorPage(404, "Asset not found."));

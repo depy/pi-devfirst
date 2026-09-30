@@ -32,6 +32,14 @@ const marked = new Marked({
 		html({ text }: Tokens.HTML | Tokens.Tag): string {
 			return escapeHtml(text);
 		},
+		code({ text, lang }: Tokens.Code): string | false {
+			if (lang?.trim().toLowerCase() === "mermaid") {
+				// Mermaid reads textContent, so escaped source decodes back
+				// to the original diagram text inside the browser.
+				return `<pre class="mermaid">${escapeHtml(text)}</pre>`;
+			}
+			return false;
+		},
 		link({ href, title, tokens }: Tokens.Link): string {
 			const safe = safeHref(href);
 			const label = this.parser.parseInline(tokens);
