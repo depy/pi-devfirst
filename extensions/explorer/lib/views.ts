@@ -221,7 +221,7 @@ article img { max-width: 100%; border-radius: 8px; }
 article hr { border: 0; border-top: 1px solid var(--border); }
 `;
 
-function layout(title: string, body: string): string {
+function layout(body: string): string {
 	// Load the vendored mermaid bundle only when the page has a diagram.
 	// The script draws the diagrams and puts a visible message on failure.
 	const diagram = body.includes('class="mermaid"')
@@ -246,7 +246,7 @@ function layout(title: string, body: string): string {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escapeHtml(title)}</title>
+<title>Dev-First Explorer</title>
 <link rel="stylesheet" href="/assets/style.css">
 </head>
 <body>
@@ -291,7 +291,7 @@ export function projectsPage(view: ProjectListView): string {
 			? `<p class="meta">No projects yet.</p>`
 			: `<div class="cards">${cards}</div>`);
 
-	return layout("Projects", body);
+	return layout(body);
 }
 
 export function projectPage(view: ProjectPageView): string {
@@ -317,7 +317,7 @@ export function projectPage(view: ProjectPageView): string {
 		`updated ${escapeHtml(view.project.updated)}</p>\n` +
 		`<nav><ul>${tickets}\n${phases}</ul></nav>`;
 
-	return layout(view.project.title, body);
+	return layout(body);
 }
 
 export function phasePage(view: PhasePageView): string {
@@ -349,7 +349,7 @@ export function phasePage(view: PhasePageView): string {
 		`<h2>Versions</h2>\n<nav><ul>${versions}</ul></nav>\n` +
 		`<article>${docBlock}</article>`;
 
-	return layout(`${view.project.title} / ${view.phase.title}`, body);
+	return layout(body);
 }
 
 export function ticketPage(view: TicketPageView): string {
@@ -371,7 +371,7 @@ export function ticketPage(view: TicketPageView): string {
 		`<h2>Links</h2>${links}\n` +
 		`<article>${renderMarkdown(ticket.body)}</article>`;
 
-	return layout(ticket.title || "Ticket", body);
+	return layout(body);
 }
 
 export function ticketsPage(slug: string, tickets: TicketSummary[]): string {
@@ -393,12 +393,11 @@ export function ticketsPage(slug: string, tickets: TicketSummary[]): string {
 			? `<p class="meta">No tickets for this project.</p>`
 			: `<table><thead><tr><th>#</th><th>Title</th><th>Epic</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`);
 
-	return layout(`Tickets / ${slug}`, body);
+	return layout(body);
 }
 
 export function errorPage(status: number, message: string): string {
 	return layout(
-		`Error ${status}`,
 		`<h1>Error ${status}</h1>\n<p>${escapeHtml(message)}</p>\n<p><a href="/">Back to projects</a></p>`,
 	);
 }
